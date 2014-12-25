@@ -24,7 +24,7 @@ catch
 
   fprintf('Loading region proposals...');
   regions_file = sprintf('./data/selective_search_data/%s', roidb.name);
-  regions = load(regions_file);
+  load(regions_file);
   fprintf('done\n');
 
   for i = 1:length(imdb.image_ids)
@@ -34,18 +34,40 @@ catch
     % bbox and class.
     % get image #
     [~,number,~] = fileparts(imdb.image_at(i));
-    labels = readLabels('~/kitti/object_detection/training/label_2', int(str2double(number)));
+    labels = readLabels('~/kitti/object_detection/training/label_2', round(str2double(number)));
     
+    % read the objects and dont cares from the label file
+    nObjects = 0;
+    nDontCares = 0;
+    dontcares = [];
     for j = 1:length(labels);
         l = labels(j);
-        objects(j).class = l.type;
-        objects(j).bbox = [l.x1 l.y1 l.x2 l.y2];
+        bbox = [l.x1 l.y1 l.x2 l.y2];
+        if (strcmpi(l.type, 'dontcare'))
+            nDontCares = nDontCares + 1;
+            dontcares(nDontCares,:) = bbox;
+        elseif (isKey(imdb.class_to_id, l.type))
+            nObjects = nObjects + 1;
+            objects(nObjects).class = l.type;
+            objects(nObjects).bbox = [l.x1 l.y1 l.x2 l.y2];
+        else
+            fprintf('unknown annotation: %s\n', l.type);
+        end
     end
+    
+    % remove all regions which overlap with the dont care boxes 
+    boxes = regions.boxes{i};
+    overlaps = boxdontcare(boxes(:,[2 1 4 3]), dontcares);
+    fprintf('removed %d dontcare regions\n', sum(overlaps));
+    newBoxes = boxes(~overlaps,:);
+    regions.boxes{i} = newBoxes;
+    
     roidb.rois(i) = attach_proposals(objects, regions.boxes{i}, imdb.class_to_id);
   end
 
   fprintf('Saving roidb to cache...');
   save(cache_file, 'roidb', '-v7.3');
+  save([regions_file '_pruned'], 'regions'); % only save the regions that don't overlap with dont cares.
   fprintf('done\n');
 end
 

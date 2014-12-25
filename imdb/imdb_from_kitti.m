@@ -35,9 +35,9 @@ catch
     image_names = {images.name};
     imdb.image_ids = cellfun(@extractName,image_names, 'UniformOutput', false);
 
-    imdb.classes = {'Car', 'Pedestrian'};
-    imdb.num_classes = length(imdb.classes);
-    imdb.class_to_id = containers.Map(imdb.classes, 1:imdb.num_classes);
+    imdb.classes = {'Car', 'Pedestrian', 'Cyclist', 'Van', 'Person_sitting'};
+    imdb.num_classes = 3;
+    imdb.class_to_id = containers.Map(imdb.classes, [1 2 3 1 2]);
     imdb.class_ids = 1:imdb.num_classes;
     imdb.eval_func = @imdb_eval_kitti;
     imdb.roidb_func = @roidb_from_kitti;

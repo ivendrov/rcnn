@@ -5,8 +5,8 @@ layers {
   name: "data"
   type: WINDOW_DATA
   window_data_param {
-    source: "window_file_voc_2012_train.txt"
-    mean_file: "../../data/ilsvrc12/imagenet_mean.binaryproto"
+    source: "window_file_kitti_train.txt"
+    mean_file: "/pkgs/caffe-master/data/ilsvrc12/imagenet_mean.binaryproto"
     batch_size: 128
     crop_size: 227
     mirror: true
@@ -294,15 +294,15 @@ layers {
 }
 layers {
   bottom: "fc7"
-  top: "fc8_pascal"
-  name: "fc8_pascal"
+  top: "fc8_kitti"
+  name: "fc8_kitti"
   type: INNER_PRODUCT
   blobs_lr: 10
   blobs_lr: 20
   weight_decay: 1
   weight_decay: 0
   inner_product_param {
-    num_output: 21
+    num_output: 3
     weight_filler {
       type: "gaussian"
       std: 0.01
@@ -314,7 +314,7 @@ layers {
   }
 }
 layers {
-  bottom: "fc8_pascal"
+  bottom: "fc8_kitti"
   bottom: "label"
   name: "loss"
   type: SOFTMAX_LOSS

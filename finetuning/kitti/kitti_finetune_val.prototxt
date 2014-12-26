@@ -6,7 +6,7 @@ layers {
   type: WINDOW_DATA
   window_data_param {
     source: "window_file_kitti_val.txt"
-    mean_file: "/pkgs/caffe-master/data/ilsvrc12/imagenet_mean.binaryproto"
+    mean_file: "/h/14/vendrov/rcnn/data/imagenet_mean.binaryproto"
     batch_size: 128
     crop_size: 227
     mirror: true

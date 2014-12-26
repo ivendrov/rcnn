@@ -51,7 +51,7 @@ for i = 1:length(imdb.image_ids)
       label = 0;
       ov = 0;
     end
-    bbox = roi.boxes(j,:)-1;
+    bbox = round(roi.boxes(j,:)-1);
     fprintf(fid, '%d %.3f %d %d %d %d\n', ...
         label, ov, bbox(1), bbox(2), bbox(3), bbox(4));
   end

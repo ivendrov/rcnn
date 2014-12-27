@@ -32,9 +32,12 @@ fid = fopen(window_file, 'wt');
 
 channels = 3; % three channel images
 
+
+
 for i = 1:length(imdb.image_ids)
   tic_toc_print('make window file: %d/%d\n', i, length(imdb.image_ids));
   img_path = imdb.image_at(i);
+  
   roi = roidb.rois(i);
   num_boxes = size(roi.boxes, 1);
   fprintf(fid, '# %d\n', i-1);
@@ -52,6 +55,11 @@ for i = 1:length(imdb.image_ids)
       ov = 0;
     end
     bbox = round(roi.boxes(j,:)-1);
+    % clip bbox
+    bbox = [max(0,bbox(1)), max(0,bbox(2)), min(bbox(3), imdb.sizes(i,2)), min(bbox(4), imdb.sizes(i,1))];
+    if (bbox(1) < 0 || bbox(2) < 0 || bbox(3) > imdb.sizes(i,2) || bbox(4) > imdb.sizes(i,1))
+        fprintf('Box out of bounds: '); display(bbox);
+    end
     fprintf(fid, '%d %.3f %d %d %d %d\n', ...
         label, ov, bbox(1), bbox(2), bbox(3), bbox(4));
   end

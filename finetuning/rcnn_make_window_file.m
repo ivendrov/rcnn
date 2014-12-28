@@ -39,6 +39,16 @@ for i = 1:length(imdb.image_ids)
   img_path = imdb.image_at(i);
   
   roi = roidb.rois(i);
+  % filter out bad boxes
+  bboxes = max(0,round(roi.boxes - 1));
+  bad = bboxes(:,1) > bboxes(:,3) | bboxes(:,2) > bboxes(:,4) | bboxes(:,1) < 0 ... 
+      | bboxes(:,2) < 0 | bboxes(:,3) > imdb.sizes(i,2) | bboxes(:,4) > imdb.sizes(i,1);
+  if (sum(bad) > 0)
+      fprintf('filtered out %d bad boxes', sum(bad));
+  end
+  roi.boxes = bboxes(~bad,:);
+  roi.overlap = roi.overlap(~bad,:);
+  % continue
   num_boxes = size(roi.boxes, 1);
   fprintf(fid, '# %d\n', i-1);
   fprintf(fid, '%s\n', img_path);
@@ -54,14 +64,9 @@ for i = 1:length(imdb.image_ids)
       label = 0;
       ov = 0;
     end
-    bbox = round(roi.boxes(j,:)-1);
-    % clip bbox
-    bbox = [max(0,bbox(1)), max(0,bbox(2)), min(bbox(3), imdb.sizes(i,2)), min(bbox(4), imdb.sizes(i,1))];
-    if (bbox(1) < 0 || bbox(2) < 0 || bbox(3) > imdb.sizes(i,2) || bbox(4) > imdb.sizes(i,1))
-        fprintf('Box out of bounds: '); display(bbox);
-    end
+    bbox = roi.boxes(j,:);
     fprintf(fid, '%d %.3f %d %d %d %d\n', ...
-        label, ov, bbox(1), bbox(2), bbox(3), bbox(4));
+       label, ov, bbox(1), bbox(2), bbox(3), bbox(4));
   end
 end
 

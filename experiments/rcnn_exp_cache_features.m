@@ -1,19 +1,18 @@
 function rcnn_exp_cache_features(chunk)
 
 % -------------------- CONFIG --------------------
-net_file     = './data/caffe_nets/finetune_voc_2007_trainval_iter_70k';
-cache_name   = 'v1_finetune_voc_2007_trainval_iter_70k';
+net_file     = './finetuning/kitti/finetune_kitti_train_iter_41000.caffemodel';
+cache_name   = 'finetune_kitti_iter_41000';
 crop_mode    = 'warp';
 crop_padding = 16;
 
-% change to point to your VOCdevkit install
-VOCdevkit = './datasets/VOCdevkit2007';
 % ------------------------------------------------
 
-imdb_train = imdb_from_voc(VOCdevkit, 'train', '2007');
-imdb_val   = imdb_from_voc(VOCdevkit, 'val', '2007');
-imdb_test  = imdb_from_voc(VOCdevkit, 'test', '2007');
-imdb_trainval = imdb_from_voc(VOCdevkit, 'trainval', '2007');
+imdb_train = imdb_from_kitti('train');
+imdb_val   = imdb_from_kitti('val');
+%imdb_test  = imdb_from_voc(VOCdevkit, 'test', '2007');
+%imdb_trainval = imdb_from_voc(VOCdevkit, 'trainval', '2007');
+imdb_trainval.name = 'trainval';
 
 switch chunk
   case 'train'

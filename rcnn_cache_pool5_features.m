@@ -83,6 +83,10 @@ for i = opts.start:opts.end
   tot_th = tic;
 
   d = roidb.rois(i);
+  % remove empty boxes
+  nonEmpty = d.boxes(:,1) < d.boxes(:,3) & d.boxes(:,2) < d.boxes(:,4);
+  d.boxes = d.boxes(nonEmpty,:);
+  
   im = imread(imdb.image_at(i));
 
   th = tic;

@@ -23,18 +23,20 @@ if ~exist('demo_choice', 'var') || isempty(demo_choice)
   demo_choice = 'PASCAL';
 end
 
-switch demo_choice
-  case 'PASCAL'
-    % Example using the PASCAL VOC 2007 fine-tuned detectors (20 classes)
-    rcnn_model_file = './data/rcnn_models/voc_2012/rcnn_model_finetuned.mat';
-    im = imread('./examples/images/000084.jpg');
-  case 'ILSVRC13'
-    % Example using the ILSVRC13 fine-tuned detectors (200 classes)
-    rcnn_model_file = './data/rcnn_models/ilsvrc2013/rcnn_model.mat';
-    im = imread('./examples/images/fish-bike.jpg');
-  otherwise
-    error('unknown demo ''%s'' [valid options: ''PASCAL'' or ''ILSVRC13'']', demo_choice);
-end
+% switch demo_choice
+%   case 'PASCAL'
+%     % Example using the PASCAL VOC 2007 fine-tuned detectors (20 classes)
+%     rcnn_model_file = './data/rcnn_models/voc_2012/rcnn_model_finetuned.mat';
+%     im = imread('./examples/images/000084.jpg');
+%   case 'ILSVRC13'
+%     % Example using the ILSVRC13 fine-tuned detectors (200 classes)
+%     rcnn_model_file = './data/rcnn_models/ilsvrc2013/rcnn_model.mat';
+%     im = imread('./examples/images/fish-bike.jpg');
+%   otherwise
+%     error('unknown demo ''%s'' [valid options: ''PASCAL'' or ''ILSVRC13'']', demo_choice);
+% end
+rcnn_model_file = './cachedir/kitti_train/rcnn_model.mat';
+im = imread('~/kitti/object_detection/training/image_2/train/000003.png');
 
 if ~exist(rcnn_model_file, 'file')
   error('You need to download the R-CNN precomputed models. See README.md for details.');
@@ -66,8 +68,8 @@ fprintf('Total %d-class detection time: %.3fs\n', ...
 
 all_dets = [];
 for i = 1:length(dets)
-  all_dets = cat(1, all_dets, ...
-      [i * ones(size(dets{i}, 1), 1) dets{i}]);
+  all_dets =[all_dets ;
+      [i * ones(size(dets{i}, 1), 1) dets{i}]];
 end
 
 [~, ord] = sort(all_dets(:,end), 'descend');

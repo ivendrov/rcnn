@@ -13,7 +13,7 @@ function dets = rcnn_detect(im, rcnn_model, thresh)
 fprintf('Computing candidate regions...');
 th = tic();
 fast_mode = true;
-im_width = 500;
+im_width = 1000;
 boxes = selective_search_boxes(im, fast_mode, im_width);
 % compat: change coordinate order from [y1 x1 y2 x2] to [x1 y1 x2 y2]
 boxes = boxes(:, [2 1 4 3]);
@@ -37,7 +37,7 @@ fprintf('Applying NMS...');
 th = tic();
 num_classes = length(rcnn_model.classes);
 dets = cell(num_classes, 1);
-for i = 1:num_classes
+for i = 1:3
   I = find(scores(:, i) > thresh);
   scored_boxes = cat(2, boxes(I, :), scores(I, i));
   keep = nms(scored_boxes, 0.3); 

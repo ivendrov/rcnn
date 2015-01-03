@@ -23,7 +23,7 @@ image_ids = imdb.image_ids;
 
 % assume they are all the same
 feat_opts = rcnn_model.training_opts;
-num_classes = length(rcnn_model.classes);
+num_classes = imdb.num_classes;
 
 if ~exist('suffix', 'var') || isempty(suffix)
   suffix = '';

@@ -1,8 +1,12 @@
-function res = rcnn_test(rcnn_model, imdb, suffix)
+function aboxes = rcnn_test(rcnn_model, imdb, suffix)
 % res = rcnn_test(rcnn_model, imdb, suffix)
 %   Compute test results using the trained rcnn_model on the
 %   image database specified by imdb. Results are saved
 %   with an optional suffix.
+
+% returns aboxes, a two-dimensional cell array
+% with the first dimension being classes, the second
+% dimension images. 
 
 % AUTORIGHTS
 % ---------------------------------------------------------
@@ -109,18 +113,3 @@ catch
     clear boxes inds;
   end
 end
-
-% ------------------------------------------------------------------------
-% Peform AP evaluation
-% ------------------------------------------------------------------------
-for model_ind = 1:num_classes
-  cls = rcnn_model.classes{model_ind};
-  res(model_ind) = imdb.eval_func(cls, aboxes{model_ind}, imdb, suffix);
-end
-
-fprintf('\n~~~~~~~~~~~~~~~~~~~~\n');
-fprintf('Results:\n');
-aps = [res(:).ap]';
-disp(aps);
-disp(mean(aps));
-fprintf('~~~~~~~~~~~~~~~~~~~~\n');

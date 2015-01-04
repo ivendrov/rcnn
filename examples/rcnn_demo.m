@@ -1,4 +1,4 @@
-function rcnn_demo(demo_choice, use_gpu)
+function rcnn_demo(demo_choice)
 % rcnn_demo(demo_choice, use_gpu)
 %   Run the R-CNN demo on a test image. Set use_gpu = false to run
 %   in CPU mode. (GPU mode is the default.)
@@ -35,30 +35,17 @@ end
 %   otherwise
 %     error('unknown demo ''%s'' [valid options: ''PASCAL'' or ''ILSVRC13'']', demo_choice);
 % end
-rcnn_model_file = './cachedir/kitti_train/rcnn_model.mat';
-im = imread('~/kitti/object_detection/training/image_2/train/000003.png');
+rcnn_model_file = rcnn_create_model('./model-defs/kitti_finetune_deploy.prototxt', './finetuning/kitti/finetune_kitti_train_iter_41000.caffemodel');
+im = imread('~/kitti/object_detection/training/image_2/val/006482.png');
 
-if ~exist(rcnn_model_file, 'file')
-  error('You need to download the R-CNN precomputed models. See README.md for details.');
-end
 
-if ~exist('use_gpu', 'var') || isempty(use_gpu)
-  use_gpu = true;
-end
-
-modes = {'CPU', 'GPU'};
-fprintf('~~~~~~~~~~~~~~~~~~~\n');
-fprintf('Welcome to the %s demo\n', demo_choice);
-fprintf('Running in %s mode\n', modes{use_gpu+1});
-fprintf('(To run in %s mode, call rcnn_demo(demo_choice, %d) instead)\n',  ...
-    modes{~use_gpu+1}, ~use_gpu);
-fprintf('Press any key to continue\n');
-pause;
 
 % Initialization only needs to happen once (so this time isn't counted
 % when timing detection).
 fprintf('Initializing R-CNN model (this might take a little while)\n');
-rcnn_model = rcnn_load_model(rcnn_model_file, use_gpu);
+rcnn_model = rcnn_load_model(rcnn_model_file, 1);
+rcnn_model.classes = {'Car', 'Pedestrian', 'Cyclist'};
+caffe('set_device', 1);
 fprintf('done\n');
 
 th = tic;

@@ -23,23 +23,18 @@ fprintf('found %d candidates (in %.3fs).\n', size(boxes,1), toc(th));
 fprintf('Extracting CNN features from regions...');
 th = tic();
 feat = rcnn_features(im, boxes, rcnn_model);
-feat = rcnn_scale_features(feat, rcnn_model.training_opts.feat_norm_mean);
+%feat = rcnn_scale_features(feat, rcnn_model.training_opts.feat_norm_mean);
 fprintf('done (in %.3fs).\n', toc(th));
-
-% compute scores for each candidate [num_boxes x num_classes]
-fprintf('Scoring regions with detectors...');
-th = tic();
-scores = bsxfun(@plus, feat*rcnn_model.detectors.W, rcnn_model.detectors.B);
-fprintf('done (in %.3fs)\n', toc(th));
-
+% compute scores
+[scores, class] = max(feat,[],2);
 % apply NMS to each class and return final scored detections
 fprintf('Applying NMS...');
 th = tic();
-num_classes = length(rcnn_model.classes);
+num_classes = 3;
 dets = cell(num_classes, 1);
-for i = 1:3
-  I = find(scores(:, i) > thresh);
-  scored_boxes = cat(2, boxes(I, :), scores(I, i));
+for i = 1:num_classes
+  I = class == i+1;
+  scored_boxes = cat(2, boxes(I, :), scores(I));
   keep = nms(scored_boxes, 0.3); 
   dets{i} = scored_boxes(keep, :);
 end

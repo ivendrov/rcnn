@@ -22,7 +22,8 @@ conf = rcnn_config('sub_dir', imdb.name);
 image_ids = imdb.image_ids;
 
 % assume they are all the same
-feat_opts = rcnn_model.training_opts;
+feat_opts.layer = 8; % go to layer 8
+feat_opts.cache_name = 'finetune_kitti_iter_41000';
 num_classes = imdb.num_classes;
 
 if ~exist('suffix', 'var') || isempty(suffix)
@@ -67,18 +68,18 @@ catch
       d = rcnn_load_cached_pool5_features(feat_opts.cache_name, ...
           imdb.name, image_ids{i});
       if isempty(d.feat)
+        fprintf('Could not load pool5 features!');
         continue;
       end
       d.feat = rcnn_pool5_to_fcX(d.feat, feat_opts.layer, rcnn_model);
-      d.feat = rcnn_scale_features(d.feat, feat_opts.feat_norm_mean);
-      zs = bsxfun(@plus, d.feat*rcnn_model.detectors(f).W, rcnn_model.detectors(f).B);
-
+      % to each box, assign the class of the largest score
+      % (1 = background, 2 = first foreground object, etc)
+      [score,classes] = max(d.feat, [], 2);
       for j = 1:num_classes
         boxes = d.boxes;
-        z = zs(:,j);
-        I = find(~d.gt & z > thresh(j));
+        I = find(classes == j+1 & score > thresh(j));
         boxes = boxes(I,:);
-        scores = z(I);
+        scores = score(I);
         aboxes{j}{i} = cat(2, single(boxes), single(scores));
         [~, ord] = sort(scores, 'descend');
         ord = ord(1:min(length(ord), max_per_image));

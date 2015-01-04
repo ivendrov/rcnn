@@ -1,75 +1,45 @@
 % clear and close everything
-clear all; close all;
+close all;
 
 root_dir  = '~/kitti/object_detection';
-train_dir = fullfile(root_dir,'training');
-train_label_dir = fullfile(train_dir, 'label_2');
-train_image_dir = fullfile(train_dir, 'image_2');
-test_dir  = fullfile(root_dir,'/training/rcnn_label_2'); % location of your testing dir
-
+test_dir  = fullfile(root_dir,'/training/rcnn_label_2/val'); % location of your testing dir
 addpath(fullfile(root_dir,'devkit/matlab'));
-
-
-% read objects of first training image
-train_objects = readLabels(train_label_dir,0);
+imdb = imdb_from_kitti('val');
 
 % set RCNN 
-rcnn_model_file = './data/rcnn_models/ilsvrc2013/rcnn_model.mat';
+rcnn_model_file = rcnn_create_model('./model-defs/kitti_finetune_deploy.prototxt', './finetuning/kitti/finetune_kitti_train_iter_41000.caffemodel');%'./cachedir/kitti_train/rcnn_model.mat';
 
 % Initialization only needs to happen once (so this time isn't counted
 % when timing detection).
 fprintf('Initializing R-CNN model (this might take a little while)\n');
 use_gpu = 1;
-thresh = -0.3;
-rcnn_model = rcnn_load_model(rcnn_model_file, use_gpu); 
+rcnn_model = rcnn_load_model(rcnn_model_file, use_gpu);
+rcnn_model.classes = {'Car', 'Pedestrian', 'Cyclist'};
+caffe('set_device', 1);
 fprintf('done\n');
 
-% loop over all images
-for image = 0:10000;
-    im = imread(sprintf('%s/%06d.png',train_image_dir,image));
-    dets = rcnn_detect(im, rcnn_model, thresh);
+fprintf('Running test: \n')
+aboxes = rcnn_test(rcnn_model, imdb);
 
-    all_dets = [];
-    for i = 1:length(dets)
-      all_dets = cat(1, all_dets, ...
-          [i * ones(size(dets{i}, 1), 1) dets{i}]);
+for i = 1:length(imdb.image_ids)
+    idx = 0;
+    objects = [];
+    for j = imdb.class_ids % number of classes
+        detections = aboxes{j}{i};
+        
+        for k = 1:size(detections,1)
+            idx = idx + 1;
+            objects(idx).type = imdb.classes{j};
+            objects(idx).score = detections(k,end);
+            objects(idx).x1 = detections(k,1);
+            objects(idx).y1 = detections(k,2);
+            objects(idx).x2 = detections(k,3);
+            objects(idx).y2 = detections(k,4);
+            objects(idx).alpha = -10; 
+        end
     end
-
-    [~, ord] = sort(all_dets(:,end), 'descend');
-    test_objects = [];
-    for i = 1:length(ord)
-      score = all_dets(ord(i), end);
-      classIndex = all_dets(ord(i),1);
-      box = all_dets(ord(i),2:5);
-      if score < thresh
-        break;
-      end
-      
-      className1 = rcnn_model.classes{all_dets(ord(i),1)};
-      switch className1
-          case 'car' 
-              className = 'Car';
-          case 'person'
-              className = 'Pedestrian';
-          otherwise
-              className = 'DontCare';
-      end
-      
-      test_objects(i).type  = className;
-      test_objects(i).x1    = box(1);
-      test_objects(i).y1    = box(2);
-      test_objects(i).x2    = box(3);
-      test_objects(i).y2    = box(4);
-      test_objects(i).alpha = pi/2;
-      test_objects(i).score = score;
-      %cls = rcnn_model.classes{all_dets(ord(i), 1)};
-      %showboxes(im, box);
-      %title(sprintf('det #%d: %s score = %.3f', ...
-      %    i, className1, score));
-      %drawnow;
-      %pause;
-    end
-    writeLabels(test_objects,test_dir,image);
+           
+    writeLabels(objects,test_dir,str2num(['int64(' imdb.image_ids{i} ')']));
 end
 
 

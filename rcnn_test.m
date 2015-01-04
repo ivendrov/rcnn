@@ -104,6 +104,10 @@ catch
         I = find(aboxes{i}{j}(:,end) < thresh(i));
         aboxes{i}{j}(I,:) = [];
         box_inds{i}{j}(I,:) = [];
+        
+        % perform nms
+        keep = nms(aboxes{i}{j}, 0.3);
+        aboxes{i}{j} = aboxes{i}{j}(keep,:);
       end
     end
 

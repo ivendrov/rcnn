@@ -36,7 +36,7 @@ ip.addParamValue('bias_mult',       10,     @isscalar);
 ip.addParamValue('pos_loss_weight', 2,      @isscalar);
 ip.addParamValue('layer',           7,      @isscalar);
 ip.addParamValue('k_folds',         2,      @isscalar);
-ip.addParamValue('checkpoint',      0,      @isscalar);
+ip.addParamValue('checkpoint',      300,      @isscalar);
 ip.addParamValue('crop_mode',       'warp', @isstr);
 ip.addParamValue('crop_padding',    16,     @isscalar);
 ip.addParamValue('net_file', ...
@@ -94,14 +94,17 @@ catch
   save(save_file, 'X_pos', 'keys_pos', '-v7.3');
 end
 % Init training caches
-caches = {};
-for i = imdb.class_ids
-  fprintf('%14s has %6d positive instances\n', ...
-      imdb.classes{i}, size(X_pos{i},1));
-  X_pos{i} = rcnn_pool5_to_fcX(X_pos{i}, opts.layer, rcnn_model);
-  X_pos{i} = rcnn_scale_features(X_pos{i}, opts.feat_norm_mean);
-  caches{i} = init_cache(X_pos{i}, keys_pos{i});
-end
+%caches = {};
+% for i = imdb.class_ids
+%   fprintf('%14s has %6d positive instances\n', ...
+%       imdb.classes{i}, size(X_pos{i},1));
+%   X_pos{i} = rcnn_pool5_to_fcX(X_pos{i}, opts.layer, rcnn_model);
+%   X_pos{i} = rcnn_scale_features(X_pos{i}, opts.feat_norm_mean);
+%   caches{i} = init_cache(X_pos{i}, keys_pos{i});
+% end
+load([conf.cache_dir 'rcnn_model']);
+display(caches);
+
 % ------------------------------------------------------------------------
 
 % ------------------------------------------------------------------------
@@ -186,7 +189,7 @@ for hard_epoch = 1:max_hard_epochs
     first_time = false;
 
     if opts.checkpoint > 0 && mod(i, opts.checkpoint) == 0
-      save([conf.cache_dir 'rcnn_model'], 'rcnn_model');
+      save([conf.cache_dir 'rcnn_model'], 'rcnn_model', 'caches', '-v7.3');
     end
   end
 end

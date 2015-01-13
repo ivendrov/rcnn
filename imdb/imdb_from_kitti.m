@@ -1,8 +1,13 @@
 function imdb = imdb_from_kitti(image_set)
-% builds an image database from the selected KITTI dataset (train or val),
+% builds an image database from the selected KITTI dataset (train, val, or test),
 % TODO add handling for test images
-root_dir = '/ais/gobi3/w/QandA/KITTI/object_detection/training/image_2/';
-image_dir = fullfile(root_dir, image_set); % image_set should be train or val
+switch image_set
+    case 'test'
+        image_dir = '/ais/gobi3/w/QandA/KITTI/object_detection/testing/image_2';
+    otherwise  % image_set is train or val
+        root_dir = '/ais/gobi3/w/QandA/KITTI/object_detection/training/image_2/';
+        image_dir = fullfile(root_dir, image_set); 
+end
 
 % ---------------------------------------------------------
 % Copyright (c) 2014, Ross Girshick

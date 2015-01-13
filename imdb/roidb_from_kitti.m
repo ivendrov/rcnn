@@ -30,44 +30,48 @@ catch
   for i = 1:length(imdb.image_ids)
     tic_toc_print('roidb (%s): %d/%d\n', roidb.name, i, length(imdb.image_ids));
     
-    % TODO GET GROUND TRUTH OBJECTS; objects is a struct array with fields
-    % bbox and class.
-    % get image #
-    [~,number,~] = fileparts(imdb.image_at(i));
-    labels = readLabels('~/kitti/object_detection/training/label_2', round(str2double(number)));
-    
-    % read the objects and dont cares from the label file
-    nObjects = 0;
-    nDontCares = 0;
-    dontcares = [];
-    for j = 1:length(labels);
-        l = labels(j);
-        bbox = [l.x1 l.y1 l.x2 l.y2];
-        if (strcmpi(l.type, 'dontcare'))
-            nDontCares = nDontCares + 1;
-            dontcares(nDontCares,:) = bbox;
-        elseif (isKey(imdb.class_to_id, l.type))
-            nObjects = nObjects + 1;
-            objects(nObjects).class = l.type;
-            objects(nObjects).bbox = [l.x1 l.y1 l.x2 l.y2];
-        else
-            fprintf('unknown annotation: %s\n', l.type);
+    if ~strcmp(roidb.name,'kitti_test')
+        % TODO GET GROUND TRUTH OBJECTS; objects is a struct array with fields
+        % bbox and class.
+        % get image #
+        [~,number,~] = fileparts(imdb.image_at(i));
+        labels = readLabels('~/kitti/object_detection/training/label_2', round(str2double(number)));
+
+        % read the objects and dont cares from the label file
+        nObjects = 0;
+        nDontCares = 0;
+        dontcares = [];
+        for j = 1:length(labels);
+            l = labels(j);
+            bbox = [l.x1 l.y1 l.x2 l.y2];
+            if (strcmpi(l.type, 'dontcare'))
+                nDontCares = nDontCares + 1;
+                dontcares(nDontCares,:) = bbox;
+            elseif (isKey(imdb.class_to_id, l.type))
+                nObjects = nObjects + 1;
+                objects(nObjects).class = l.type;
+                objects(nObjects).bbox = [l.x1 l.y1 l.x2 l.y2];
+            else
+                fprintf('unknown annotation: %s\n', l.type);
+            end
         end
+
+        % remove all regions which overlap with the dont care boxes 
+        boxes = regions.boxes{i};
+        overlaps = boxdontcare(boxes(:,[2 1 4 3]), dontcares);
+        fprintf('removed %d dontcare regions\n', sum(overlaps));
+        newBoxes = boxes(~overlaps,:);
+        regions.boxes{i} = newBoxes;
+    else 
+        % test set, so no labels, gt, or don't cares 
+        objects = [];
     end
-    
-    % remove all regions which overlap with the dont care boxes 
-    boxes = regions.boxes{i};
-    overlaps = boxdontcare(boxes(:,[2 1 4 3]), dontcares);
-    fprintf('removed %d dontcare regions\n', sum(overlaps));
-    newBoxes = boxes(~overlaps,:);
-    regions.boxes{i} = newBoxes;
     
     roidb.rois(i) = attach_proposals(objects, regions.boxes{i}, imdb.class_to_id);
   end
 
   fprintf('Saving roidb to cache...');
   save(cache_file, 'roidb', '-v7.3');
-  save([regions_file '_pruned'], 'regions'); % only save the regions that don't overlap with dont cares.
   fprintf('done\n');
 end
 
@@ -85,11 +89,18 @@ boxes = boxes(:, [2 1 4 3]);
 %        boxes: [2108x4 single]
 %         feat: [2108x9216 single]
 %        class: [2108x1 uint8]
-gt_boxes = cat(1, objects(:).bbox);
-all_boxes = cat(1, gt_boxes, boxes);
-gt_classes = class_to_id.values({objects(:).class});
-gt_classes = cat(1, gt_classes{:});
-num_gt_boxes = size(gt_boxes, 1);
+if isfield(objects, 'bbox')
+    gt_boxes = cat(1, objects(:).bbox);
+    all_boxes = cat(1, gt_boxes, boxes);
+    gt_classes = class_to_id.values({objects(:).class});
+    gt_classes = cat(1, gt_classes{:});
+    num_gt_boxes = size(gt_boxes, 1);
+else 
+  gt_boxes = [];
+  all_boxes = boxes;
+  gt_classes = [];
+  num_gt_boxes = 0;
+end
 
 num_boxes = size(boxes, 1);
 
